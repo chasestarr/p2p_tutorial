@@ -1,8 +1,17 @@
 'use strict'
 const net = require('net');
 const streamSet = require('stream-set');
+const mdns = require('mdns');
 
 let activeSockets = streamSet();
+
+
+
+let ad = mdns.createAdvertisement(mdns.tcp('http'), 4321);
+ad.start();
+
+
+
 
 const server = net.createServer((socket) => {
   activeSockets.add(socket);
@@ -22,4 +31,4 @@ const server = net.createServer((socket) => {
   });
 });
 
-server.listen(8000);
+server.listen(10000);
