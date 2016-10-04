@@ -13,9 +13,11 @@
     "duplex-json-stream": "^1.0.1",
     "fully-connected-topology": "^1.1.1",
     "hash-to-port": "^1.0.0",
+    "level": "^1.4.0",
     "lookup-multicast-dns": "^1.0.3",
     "mdns": "^2.3.3",
     "register-multicast-dns": "^1.1.0",
+    "scuttleup": "^3.3.0",
     "stream-set": "^1.1.0"
   }
 }

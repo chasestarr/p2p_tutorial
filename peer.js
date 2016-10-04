@@ -1,50 +1,76 @@
 'use strict'
+require('lookup-multicast-dns/global');
 const topology = require('fully-connected-topology');
 const streamSet = require('stream-set');
 const hashToPort = require('hash-to-port');
 const register = require('register-multicast-dns');
-const lookup = require('lookup-multicast-dns');
+const scuttleup = require('scuttleup');
+const level = require('level');
 
 const toAddress = (username) => {
-  return username + '.local' + hashToPort(username);
+  return username + '.local:' + hashToPort(username);
 };
 
 let connections = streamSet();
 
-let username = process.argv[2];
-const me = process.argv[3];
-const peers = process.argv.slice(4);
+const me = process.argv[2];
+const peers = process.argv.slice(3);
 
-register(toAddress(username));
-peers.map((peer) => )
+register(me);
 
 let seq = 0;
 let id = Math.random();
 
-let t = topology(me, peers);
+console.log(me, toAddress(me), peers);
+
+let t = topology(toAddress(me), peers.map(toAddress));
+
+var logs = scuttleup(level(me + '.db')) // use a database per user
+
+// t.on('connection', (socket, id) => {
+//   console.log('info> new connection from', id);
+//   socket.on('data', (data) => {
+//     let messageObject = JSON.parse(data);
+//     if (messageObject.seq > seq) {
+//       process.stdout.write(messageObject.username + ': ' + messageObject.message);
+//       seq = messageObject.seq;
+
+//       connections.forEach((peer) => {
+//         peer.write(data);
+//       });
+//     }
+//   });
+
+//   connections.add(socket);
+
+// });
 
 t.on('connection', (socket, id) => {
   console.log('info> new connection from', id);
-  socket.on('data', (data) => {
-    let messageObject = JSON.parse(data);
-    if (messageObject.seq > seq) {
-      process.stdout.write(messageObject.username + ': ' + messageObject.message);
-      seq = messageObject.seq;
+  socket.pipe(logs.createReplicationStream({live: true})).pipe(socket);
 
-      connections.forEach((peer) => {
-        peer.write(data);
-      });
-    }
-  });
+  logs.createReadStream({live: true})
+    .on('data', (data) => {
+      // console.log('raw data', data);
+      let messageObject = JSON.parse(data.entry.toString());
+      if (messageObject.seq > seq) {
+        process.stdout.write(messageObject.username + ': ' + messageObject.message);
+        seq = messageObject.seq;
 
-  connections.add(socket);
+         // connections.forEach((peer) => {
+           // peer.write(data);
+         // });
+      }
+    });
 
-});
+    connections.add(socket);
+})
 
 process.stdin.on('data', (data) => {
   seq++;
-  connections.forEach((socket) => {
-    let messageObject = {'username': username, 'message': data.toString(), 'seq': seq};
-    socket.write(JSON.stringify(messageObject));
-  })
+  // connections.forEach((socket) => {
+    let messageObject = {'username': me, 'message': data.toString(), 'seq': seq, 'id': id};
+    // socket.write(JSON.stringify(messageObject));
+    logs.append(JSON.stringify(messageObject));
+  // })
 });
