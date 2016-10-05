@@ -27,39 +27,16 @@ let t = topology(toAddress(me), peers.map(toAddress));
 
 var logs = scuttleup(level(me + '.db')) // use a database per user
 
-// t.on('connection', (socket, id) => {
-//   console.log('info> new connection from', id);
-//   socket.on('data', (data) => {
-//     let messageObject = JSON.parse(data);
-//     if (messageObject.seq > seq) {
-//       process.stdout.write(messageObject.username + ': ' + messageObject.message);
-//       seq = messageObject.seq;
-
-//       connections.forEach((peer) => {
-//         peer.write(data);
-//       });
-//     }
-//   });
-
-//   connections.add(socket);
-
-// });
-
 t.on('connection', (socket, id) => {
   console.log('info> new connection from', id);
   socket.pipe(logs.createReplicationStream({live: true})).pipe(socket);
 
   logs.createReadStream({live: true})
     .on('data', (data) => {
-      // console.log('raw data', data);
       let messageObject = JSON.parse(data.entry.toString());
       if (messageObject.seq > seq) {
         process.stdout.write(messageObject.username + ': ' + messageObject.message);
         seq = messageObject.seq;
-
-         // connections.forEach((peer) => {
-           // peer.write(data);
-         // });
       }
     });
 
@@ -68,9 +45,6 @@ t.on('connection', (socket, id) => {
 
 process.stdin.on('data', (data) => {
   seq++;
-  // connections.forEach((socket) => {
     let messageObject = {'username': me, 'message': data.toString(), 'seq': seq, 'id': id};
-    // socket.write(JSON.stringify(messageObject));
     logs.append(JSON.stringify(messageObject));
-  // })
 });
