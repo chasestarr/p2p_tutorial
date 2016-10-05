@@ -10,8 +10,8 @@ const request = require('request');
 const address = require('network-address');
 const crypto = require('crypto');
 
-// const endpoint = `https://p2pdiscoverserver-itsdpmkvlx.now.sh`;
-const endpoint = `http://localhost:8000`;
+const endpoint = `https://p2pdiscoverserver-yuzuolyemd.now.sh`;
+// const endpoint = `http://localhost:8000`;
 
 
 const addUser = (username, cb) => {
