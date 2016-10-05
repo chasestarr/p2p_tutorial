@@ -16,7 +16,9 @@
     "level": "^1.4.0",
     "lookup-multicast-dns": "^1.0.3",
     "mdns": "^2.3.3",
+    "network-address": "^1.1.0",
     "register-multicast-dns": "^1.1.0",
+    "request": "^2.75.0",
     "scuttleup": "^3.3.0",
     "stream-set": "^1.1.0"
   }
