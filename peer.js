@@ -1,9 +1,6 @@
 'use strict'
-require('lookup-multicast-dns/global');
 const topology = require('fully-connected-topology');
-const streamSet = require('stream-set');
 const hashToPort = require('hash-to-port');
-const register = require('register-multicast-dns');
 const scuttleup = require('scuttleup');
 const level = require('level');
 const request = require('request');
@@ -12,7 +9,6 @@ const crypto = require('crypto');
 
 const endpoint = `https://p2pdiscoverserver-yuzuolyemd.now.sh`;
 // const endpoint = `http://localhost:8000`;
-
 
 const addUser = (username, cb) => {
   console.log('adding user...');
@@ -41,17 +37,13 @@ const toAddress = (username) => {
   return address() + ':' + hashToPort(username);
 };
 
-let connections = streamSet();
-
 const me = process.argv[2];
-// const peers = process.argv.slice(3);
 const peer = process.argv[3];
-
-register(me);
 
 let seq = 0;
 let id = Math.random();
 
+// start the connection
 addUser(me, () => {
   findUser(peer, initialize);
 });
@@ -59,10 +51,11 @@ addUser(me, () => {
 let initialize = (peer) => {
   console.log(peer);
   let t = topology(toAddress(me), peer);
-
-  var logs = scuttleup(level(me + '.db')) // use a database per user
+  let db = level(me + '.db');
+  let logs = scuttleup(db) // use a database per user
 
   t.on('connection', (socket, id) => {
+    t.add(id);
     console.log('info> new connection from', id);
     socket.pipe(logs.createReplicationStream({live: true})).pipe(socket);
 
@@ -74,8 +67,6 @@ let initialize = (peer) => {
           seq = messageObject.seq;
         }
       });
-
-      connections.add(socket);
   })
 
   process.stdin.on('data', (data) => {
